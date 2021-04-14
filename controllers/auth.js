@@ -1,6 +1,7 @@
 const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 
 const db = mysql.createConnection({
     host: process.env.DATABASE_HOST,
@@ -47,6 +48,30 @@ exports.register = (req, res) => {
                             });
                         }
                     });// EO db.query check pseudo
+
+                    let transport = nodemailer.createTransport({
+                        host: 'smtp.mailtrap.io',
+                        port: 2525,
+                        auth: {
+                            user: process.env.SMTP_USER,
+                            pass: process.env.SMTP_PSWD 
+                        },
+                    });
+                    // prepare the mail
+                    let message = ({
+                        from: 'admin@test.fr', // sender address
+                        to: req.body.email,
+                        subject: "✔ Bonjour " + req.body.pseudo + " votre compte est créé !", // Subject line
+                        text: "Bonjour " + req.body.pseudo + "\nMessage de votre administrateur <3 "  
+                    });
+                    // sending the mail
+                    transport.sendMail(message, function(err, info) {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            console.log(info);
+                        }
+                    });
 
                     let hashedPassword = await bcrypt.hash(password, 8);
 
